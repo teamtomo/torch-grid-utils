@@ -17,7 +17,7 @@ sources = ["src"]
 [project]
 name = "torch-grids"
 dynamic = ["version"]
-description = "Grids for 2D/3D image manipulations in PyTorch"
+description = "Grid utilities for 2D/3D image manipulations in PyTorch"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "BSD-3-Clause" }
