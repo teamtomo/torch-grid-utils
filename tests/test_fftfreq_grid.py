@@ -36,7 +36,6 @@ def test_fftfreq_grid_2d_rfft():
         image_shape=(4, 4),
         rfft=True,
     )
-    print(grid)
     assert tuple(grid.shape) == (4, 3, 2)  # (image_h, image_w_rfft, freq_hw)
     expected = torch.tensor([[[0.0000, 0.0000],
                               [0.0000, 0.2500],
