@@ -5,7 +5,7 @@ author_email: alisterburt@gmail.com
 author_name: Alister Burt
 github_username: alisterburt
 mode: tooling
-module_name: torch_grids
-project_name: torch-grids
+module_name: torch_grid_utils
+project_name: torch-grid-utils
 project_short_description: Grids for 2D/3D image manipulations in PyTorch
 

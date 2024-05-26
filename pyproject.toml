@@ -15,7 +15,7 @@ sources = ["src"]
 
 # https://peps.python.org/pep-0621/
 [project]
-name = "torch-grids"
+name = "torch-grid-utils"
 dynamic = ["version"]
 description = "Grid utilities for 2D/3D image manipulations in PyTorch"
 readme = "README.md"
@@ -63,10 +63,10 @@ repository = "https://github.com/alisterburt/torch-grids"
 # https://peps.python.org/pep-0621/#entry-points
 # same as console_scripts entry point
 # [project.scripts]
-# torch-grids-cli = "torch_grids:main_cli"
+# torch-grid-utils-cli = "torch_grid_utils:main_cli"
 
 # [project.entry-points."some.group"]
-# tomatoes = "torch_grids:main_tomatoes"
+# tomatoes = "torch_grid_utils:main_tomatoes"
 
 # https://docs.astral.sh/ruff
 [tool.ruff]

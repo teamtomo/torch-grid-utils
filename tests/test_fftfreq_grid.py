@@ -1,6 +1,6 @@
 import torch
 
-from torch_grids import fftfreq_grid
+from torch_grid_utils import fftfreq_grid
 
 
 def test_fftfreq_grid_2d_basic():

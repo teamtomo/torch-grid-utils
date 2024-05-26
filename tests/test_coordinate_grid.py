@@ -1,6 +1,6 @@
 import torch
 
-from torch_grids import coordinate_grid
+from torch_grid_utils import coordinate_grid
 
 
 def test_coordinate_grid_2d_basic():
