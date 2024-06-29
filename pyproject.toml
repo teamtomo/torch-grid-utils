@@ -53,6 +53,10 @@ dev = [
     "rich", # https://github.com/Textualize/rich
     "ruff",
 ]
+docs = [
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
 
 [project.urls]
 homepage = "https://github.com/alisterburt/torch-grids"
