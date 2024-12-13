@@ -18,6 +18,7 @@ def fftfreq_grid(
 
     For a 2D image with shape `(h, w)` and `rfft=False` this function will produce
     a `(h, w, 2)` array of DFT sample frequencies in the `h` and `w` dimensions.
+
     If `norm` is True the Euclidean norm will be calculated over the last dimension
     leaving a `(h, w)` grid.
 
@@ -170,9 +171,9 @@ def dft_center(
 ) -> torch.LongTensor:
     """Return the position of the DFT center for a given input shape."""
     fft_center = torch.zeros(size=(len(image_shape),), device=device)
-    image_shape = torch.as_tensor(image_shape).float()
+    image_shape = torch.as_tensor(image_shape, device=device).float()
     if rfft is True:
-        image_shape = torch.tensor(rfft_shape(image_shape))
+        image_shape = torch.tensor(rfft_shape(image_shape), device=device)
     if fftshifted is True:
         fft_center = torch.divide(image_shape, 2, rounding_mode='floor')
     if rfft is True:

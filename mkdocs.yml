@@ -1,0 +1,74 @@
+site_name: teamtomo/torch-grid-utils
+site_url: https://teamtomo.org/torch-grid-utils
+site_author: teamtomo
+site_description: >-
+  Documentation for starfile
+repo_name: teamtomo/torch-grid-utils
+repo_url: https://github.com/teamtomo/torch-grid-utils
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2024 - 2024 teamtomo
+
+
+# Custom navigation can be specified
+nav:
+  - Overview: index.md
+  - Usage:
+      - coordinate_grid: usage/coordinate_grid.md
+      - fftfreq_grid: usage/fftfreq_grid.md
+
+theme:
+  icon:
+    logo: material/cube-outline
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: blue
+
+  features:
+    - navigation.instant
+    - navigation.expand
+    - search.highlight
+    - search.suggest
+    - content.tabs.link
+
+markdown_extensions:
+  - admonition
+  - tables
+  - def_list
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - attr_list
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator:  !!python/name:material.extensions.emoji.to_svg
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          import:
+            - https://docs.python.org/3/objects.inv
+            - https://numpy.org/doc/stable/objects.inv
+          options:
+            show_root_heading: true
+            docstring_style: "numpy"
+            line_length: 50 # default is 60
+            # show_if_no_docstring: true # default is false
+            # show_signature: false  # default is true
+            show_signature_annotations: true
+            annotations_path: "source"
+            show_bases: false
+            show_source: true
+            docstring_section_style: table
+            merge_init_into_class: true

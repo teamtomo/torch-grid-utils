@@ -28,7 +28,7 @@ def test_coordinate_grid_2d_basic():
 
 
 def test_coordinate_grid_2d_with_center():
-    grid = coordinate_grid(image_shape=(4, 4), center=(2, 2))
+    grid = coordinate_grid(image_shape=(4, 4), origin=(2, 2))
     assert torch.allclose(grid[2, 2], torch.tensor([0, 0]).float())
     expected = torch.tensor([[[-2., -2.],
                               [-2., -1.],
@@ -53,7 +53,7 @@ def test_coordinate_grid_2d_with_center():
 
 
 def test_coordinate_grid_2d_with_norm():
-    grid = coordinate_grid(image_shape=(4, 4), center=(2, 2), norm=True)
+    grid = coordinate_grid(image_shape=(4, 4), origin=(2, 2), norm=True)
     expected = torch.tensor([[2.8284, 2.2361, 2.0000, 2.2361],
                              [2.2361, 1.4142, 1.0000, 1.4142],
                              [2.0000, 1.0000, 0.0000, 1.0000],
@@ -146,7 +146,7 @@ def test_coordinate_grid_3d_basic():
 
 
 def test_coordinate_grid_3d_with_center():
-    grid = coordinate_grid(image_shape=(4, 4, 4), center=(2, 2, 2))
+    grid = coordinate_grid(image_shape=(4, 4, 4), origin=(2, 2, 2))
     assert torch.allclose(grid[2, 2, 2], torch.tensor([0, 0, 0]).float())
     expected = torch.tensor([[[[-2., -2., -2.],
                                [-2., -2., -1.],
@@ -231,7 +231,7 @@ def test_coordinate_grid_3d_with_center():
 
 
 def test_coordinate_grid_3d_with_norm():
-    grid = coordinate_grid(image_shape=(4, 4, 4), center=(2, 2, 2), norm=True)
+    grid = coordinate_grid(image_shape=(4, 4, 4), origin=(2, 2, 2), norm=True)
     expected = torch.tensor([[[3.4641, 3.0000, 2.8284, 3.0000],
                               [3.0000, 2.4495, 2.2361, 2.4495],
                               [2.8284, 2.2361, 2.0000, 2.2361],

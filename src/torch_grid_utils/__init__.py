@@ -9,5 +9,5 @@ except PackageNotFoundError:
 __author__ = "Alister Burt"
 __email__ = "alisterburt@gmail.com"
 
-from .fftfreq_grid import fftfreq_grid
-from .coordinate_grid import coordinate_grid
+from ._fftfreq_grid import fftfreq_grid
+from ._coordinate_grid import coordinate_grid
