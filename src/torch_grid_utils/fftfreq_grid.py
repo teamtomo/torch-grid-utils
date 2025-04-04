@@ -5,7 +5,7 @@ import einops
 import torch
 
 
-@functools.lru_cache(maxsize=1)
+# no lru_cache as it interfers with gradient calculation (see torch-fourier-shift PR#5)
 def fftfreq_grid(
     image_shape: tuple[int, int] | tuple[int, int, int],
     rfft: bool,
