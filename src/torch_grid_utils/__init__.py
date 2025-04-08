@@ -11,3 +11,5 @@ __email__ = "alisterburt@gmail.com"
 
 from .fftfreq_grid import fftfreq_grid
 from .coordinate_grid import coordinate_grid
+from .shapes_2d import circle, rectangle, square, wedge
+from .shapes_3d import sphere, cuboid, cube, cone
