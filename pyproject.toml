@@ -37,6 +37,7 @@ dependencies = [
     "torch",
     "numpy",
     "einops",
+    "scipy"
 ]
 
 # https://peps.python.org/pep-0621/#dependencies-optional-dependencies
