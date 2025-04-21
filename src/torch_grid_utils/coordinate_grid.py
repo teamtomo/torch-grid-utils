@@ -7,7 +7,7 @@ import torch
 
 def coordinate_grid(
     image_shape: Sequence[int],
-    center: torch.Tensor | tuple[float, ...] | None = False,
+    center: torch.Tensor | tuple[float, ...] | None = None,
     norm: bool = False,
     device: torch.device | None = None,
 ) -> torch.FloatTensor:
