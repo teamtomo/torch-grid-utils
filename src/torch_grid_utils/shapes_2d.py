@@ -18,7 +18,7 @@ def circle(
     if isinstance(image_shape, int):
         image_shape = (image_shape, image_shape)
     if center is None:
-        center = dft_center(image_shape, rfft=False, fftshifted=True)
+        center = dft_center(image_shape, rfft=False, fftshift=True)
     distances = coordinate_grid(
         image_shape=image_shape,
         center=center,
@@ -40,7 +40,7 @@ def rectangle(
     if isinstance(image_shape, int):
         image_shape = (image_shape, image_shape)
     if center is None:
-        center = dft_center(image_shape, rfft=False, fftshifted=True)
+        center = dft_center(image_shape, rfft=False, fftshift=True)
     coordinates = coordinate_grid(
         image_shape=image_shape,
         center=center,
@@ -80,7 +80,7 @@ def wedge(
     if isinstance(image_shape, int):
         image_shape = (image_shape, image_shape)
     center = dft_center(
-        image_shape, rfft=False, fftshifted=True
+        image_shape, rfft=False, fftshift=True
     )
     vectors = coordinate_grid(
         image_shape=image_shape,
@@ -98,6 +98,6 @@ def wedge(
     acute_bound = aperture / 2
     obtuse_bound = 180 - acute_bound
     in_wedge = torch.logical_or(angles <= acute_bound, angles >= obtuse_bound)
-    dc_h, dc_w = dft_center(image_shape, rfft=False, fftshifted=True)
+    dc_h, dc_w = dft_center(image_shape, rfft=False, fftshift=True)
     in_wedge[dc_h, dc_w] = True
     return add_soft_edge_2d(in_wedge, smoothing_radius=smoothing_radius)
