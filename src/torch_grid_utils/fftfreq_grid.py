@@ -202,3 +202,19 @@ def fftshift_3d(input: torch.Tensor, rfft: bool):
     else:
         output = torch.fft.fftshift(input, dim=(-3, -2,))
     return output
+
+
+def fftfreq_to_spatial_frequency(
+    frequencies: torch.Tensor, spacing: float
+) -> torch.Tensor:
+    """Convert frequencies in cycles per pixel to cycles per unit distance."""
+    # cycles/px * px/distance = cycles/distance
+    return torch.as_tensor(frequencies, dtype=torch.float32) * (1 / spacing)
+
+
+def spatial_frequency_to_fftfreq(
+    frequencies: torch.Tensor, spacing: float
+) -> torch.Tensor:
+    """Convert frequencies in cycles per unit distance to cycles per pixel."""
+    # cycles/distance * distance/px = cycles/px
+    return torch.as_tensor(frequencies, dtype=torch.float32) * spacing
