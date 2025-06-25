@@ -76,7 +76,7 @@ def fftfreq_grid(
         ) ** 0.5
     return frequency_grid
 
-fftfreq_grid_cached = functools.lru_cache(fftfreq_grid, maxsize=CACHE_SIZE)
+fftfreq_grid_cached = functools.lru_cache(maxsize=CACHE_SIZE)(fftfreq_grid)
 
 def _construct_fftfreq_grid_2d(
     image_shape: tuple[int, int],
