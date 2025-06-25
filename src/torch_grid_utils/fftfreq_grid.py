@@ -4,8 +4,8 @@ from typing import Sequence
 import einops
 import torch
 
+CACHE_SIZE = 1
 
-# no lru_cache as it interfers with gradient calculation (see torch-fourier-shift PR#5)
 def fftfreq_grid(
     image_shape: tuple[int, int] | tuple[int, int, int],
     rfft: bool,
@@ -76,6 +76,7 @@ def fftfreq_grid(
         ) ** 0.5
     return frequency_grid
 
+fftfreq_grid_cached = functools.lru_cache(fftfreq_grid, maxsize=CACHE_SIZE)
 
 def _construct_fftfreq_grid_2d(
     image_shape: tuple[int, int],
