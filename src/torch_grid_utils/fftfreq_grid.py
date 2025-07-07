@@ -180,7 +180,23 @@ def dft_center(
     return fft_center.long()
 
 
-def fftshift_2d(input: torch.Tensor, rfft: bool):
+def fftshift_1d(input: torch.Tensor, rfft: bool) -> torch.Tensor:
+    if rfft is False:
+        output = torch.fft.fftshift(input, dim=(-1))
+    else:
+        output = input
+    return output
+
+
+def ifftshift_1d(input: torch.Tensor, rfft: bool) -> torch.Tensor:
+    if rfft is False:
+        output = torch.fft.ifftshift(input, dim=(-1))
+    else:
+        output = input
+    return output
+
+
+def fftshift_2d(input: torch.Tensor, rfft: bool) -> torch.Tensor:
     if rfft is False:
         output = torch.fft.fftshift(input, dim=(-2, -1))
     else:
@@ -188,7 +204,7 @@ def fftshift_2d(input: torch.Tensor, rfft: bool):
     return output
 
 
-def ifftshift_2d(input: torch.Tensor, rfft: bool):
+def ifftshift_2d(input: torch.Tensor, rfft: bool) -> torch.Tensor:
     if rfft is False:
         output = torch.fft.ifftshift(input, dim=(-2, -1))
     else:
@@ -196,11 +212,19 @@ def ifftshift_2d(input: torch.Tensor, rfft: bool):
     return output
 
 
-def fftshift_3d(input: torch.Tensor, rfft: bool):
+def fftshift_3d(input: torch.Tensor, rfft: bool) -> torch.Tensor:
     if rfft is False:
         output = torch.fft.fftshift(input, dim=(-3, -2, -1))
     else:
-        output = torch.fft.fftshift(input, dim=(-3, -2,))
+        output = torch.fft.fftshift(input, dim=(-3, -2))
+    return output
+
+
+def ifftshift_3d(input: torch.Tensor, rfft: bool) -> torch.Tensor:
+    if rfft is False:
+        output = torch.fft.ifftshift(input, dim=(-3, -2, -1))
+    else:
+        output = torch.fft.ifftshift(input, dim=(-3, -2))
     return output
 
 
