@@ -20,8 +20,8 @@ from torch_grid_utils.fftfreq_grid import (
     ifftshift_2d,
     fftshift_3d,
     ifftshift_3d,
-    fftfreq_to_spatial_freq,
-    spatial_freq_to_fftfreq,
+    fftfreq_to_spatial_frequency,
+    spatial_frequency_to_fftfreq,
 )
 from torch_grid_utils.shapes_2d import circle, rectangle, square, wedge
 from torch_grid_utils.shapes_3d import sphere, cuboid, cube, cone
