@@ -59,3 +59,17 @@ def coordinate_grid(
 def _unique_characters(n: int) -> str:
     chars = "abcdefghijklmnopqrstuvwxyz"
     return chars[:n]
+
+
+def image_center(
+    image_shape: tuple[int, ...],
+    device: torch.device | None = None,
+) -> torch.LongTensor:
+    from torch_grid_utils.fftfreq_grid import dft_center
+    center = dft_center(
+        image_shape=image_shape,
+        rfft=False,
+        fftshift=True,
+        device=device
+    )
+    return center
