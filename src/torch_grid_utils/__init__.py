@@ -9,7 +9,7 @@ except PackageNotFoundError:
 __author__ = "Alister Burt"
 __email__ = "alisterburt@gmail.com"
 
-from torch_grid_utils.coordinate_grid import coordinate_grid
+from torch_grid_utils.coordinate_grid import coordinate_grid, image_center
 from torch_grid_utils.fftfreq_grid import (
     fftfreq_grid,
     dft_center,
@@ -29,6 +29,7 @@ from torch_grid_utils.shapes_3d import sphere, cuboid, cube, cone
 __all__ = [
     "coordinate_grid",
     "fftfreq_grid",
+    "image_center",
     "dft_center",
     "rfft_shape",
     "fftshift_1d",
