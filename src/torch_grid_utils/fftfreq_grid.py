@@ -40,10 +40,10 @@ def fftfreq_grid(
         PyTorch device on which the returned grid will be stored.
     transform_matrix: torch.Tensor | None
         Optional 2x2 transformation matrix for anisotropic magnification
-        (2D images only). Applied to the frequency grid as:
-        [freq_y_new, freq_x_new]^T = transform_matrix @ [freq_y, freq_x]^T.
-        If provided, must be a 2x2 torch.Tensor. For 3D images, this parameter
-        is ignored.
+        (2D images only). This should be the real-space transformation matrix
+        A. The frequency-space transformation (A^-1)^T is automatically
+        computed and applied. If provided, must be a 2x2 torch.Tensor.
+        For 3D images, this parameter is ignored.
 
     Returns
     -------
@@ -159,12 +159,17 @@ def _apply_transform_matrix_2d(
 ) -> torch.Tensor:
     """Apply a 2x2 transformation matrix to a 2D frequency grid.
 
+    The input transform_matrix is a real-space transformation matrix A.
+    In Fourier space, coordinates transform by the inverse transpose:
+    k' = (A^-1)^T @ k.
+
     Parameters
     ----------
     frequency_grid: torch.Tensor
         Frequency grid with shape `(h, w, 2)`.
     transform_matrix: torch.Tensor
-        2x2 transformation matrix.
+        2x2 real-space transformation matrix A. The frequency-space
+        transformation (A^-1)^T is automatically computed.
     device: torch.device | None
         PyTorch device for the transformation matrix.
 
@@ -186,11 +191,15 @@ def _apply_transform_matrix_2d(
             f"got shape {transform_matrix.shape}"
         )
 
-    # Ensure matrix is float type for matrix multiplication
+    # Ensure matrix is float type for matrix operations
     transform_matrix = transform_matrix.float()
 
+    # Convert real-space transformation to frequency-space transformation
+    # If A is the real-space transform, frequency space uses (A^-1)^T
+    freq_transform = torch.linalg.inv(transform_matrix).T
+
     # Apply transformation:
-    # [freq_y_new, freq_x_new]^T = transform_matrix @ [freq_y, freq_x]^T
+    # [freq_y_new, freq_x_new]^T = freq_transform @ [freq_y, freq_x]^T
     # frequency_grid has shape (h, w, 2), we need to apply matrix
     # multiplication to the last dimension. Reshape to (h*w, 2) for batch
     # matrix multiplication
@@ -198,9 +207,8 @@ def _apply_transform_matrix_2d(
     freq_flat = einops.rearrange(frequency_grid, "h w freq -> (h w) freq")
 
     # Apply transformation: (h*w, 2) @ (2, 2)^T = (h*w, 2)
-    # Note: transform_matrix @ freq_flat^T would give (2, h*w), so we
-    # transpose
-    transformed_flat = torch.matmul(freq_flat, transform_matrix.T)
+    # Note: freq_transform @ freq_flat^T would give (2, h*w), so we transpose
+    transformed_flat = torch.matmul(freq_flat, freq_transform.T)
 
     # Reshape back to (h, w, 2)
     transformed_grid = einops.rearrange(
