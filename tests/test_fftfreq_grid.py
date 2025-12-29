@@ -1,6 +1,6 @@
 import torch
 
-from torch_grid_utils import fftfreq_grid
+from torch_grid_utils import fftfreq_grid, transform_fftfreq_grid
 
 
 def test_fftfreq_grid_2d_basic():
@@ -627,20 +627,30 @@ def test_fftfreq_grid_2d_with_transform_matrix():
     transform_matrix = torch.tensor([[1.006, 0.005], [0.006, 0.998]])
 
     # Test without fftshift
-    grid_no_shift = fftfreq_grid(
+    grid_base = fftfreq_grid(
         image_shape=(4, 4),
         rfft=False,
         fftshift=False,
-        transform_matrix=transform_matrix,
+    )
+    grid_no_shift = transform_fftfreq_grid(
+        frequency_grid=grid_base,
+        real_space_matrix=transform_matrix,
+        rfft=False,
+        fftshifted=False,
     )
     assert tuple(grid_no_shift.shape) == (4, 4, 2)
 
     # Test with fftshift
-    grid_shifted = fftfreq_grid(
+    grid_base_shifted = fftfreq_grid(
         image_shape=(4, 4),
         rfft=False,
         fftshift=True,
-        transform_matrix=transform_matrix,
+    )
+    grid_shifted = transform_fftfreq_grid(
+        frequency_grid=grid_base_shifted,
+        real_space_matrix=transform_matrix,
+        rfft=False,
+        fftshifted=True,
     )
     assert tuple(grid_shifted.shape) == (4, 4, 2)
 
@@ -666,11 +676,16 @@ def test_fftfreq_grid_2d_with_transform_matrix_fftshifted():
     """Test transformation matrix with fftshift=True."""
     transform_matrix = torch.tensor([[1.006, 0.005], [0.006, 0.998]])
 
-    grid = fftfreq_grid(
+    grid_base = fftfreq_grid(
         image_shape=(4, 4),
         rfft=False,
         fftshift=True,
-        transform_matrix=transform_matrix,
+    )
+    grid = transform_fftfreq_grid(
+        frequency_grid=grid_base,
+        real_space_matrix=transform_matrix,
+        rfft=False,
+        fftshifted=True,
     )
     assert tuple(grid.shape) == (4, 4, 2)
 

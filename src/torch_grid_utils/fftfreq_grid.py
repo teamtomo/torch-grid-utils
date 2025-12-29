@@ -1,6 +1,6 @@
 """Functions to construct grids of DFT sample frequencies."""
 
-from typing import Sequence, cast
+from typing import Sequence
 
 import einops
 import torch
@@ -14,7 +14,6 @@ def fftfreq_grid(
     spacing: float | tuple[float, float] | tuple[float, float, float] = 1,
     norm: bool = False,
     device: torch.device | None = None,
-    transform_matrix: torch.Tensor | None = None,
 ) -> torch.Tensor:
     """Construct a 2D or 3D grid of DFT sample frequencies.
 
@@ -38,12 +37,6 @@ def fftfreq_grid(
         Whether to compute the Euclidean norm over the last dimension.
     device: torch.device | None
         PyTorch device on which the returned grid will be stored.
-    transform_matrix: torch.Tensor | None
-        Optional 2x2 transformation matrix for anisotropic magnification
-        (2D images only). This should be the real-space transformation matrix
-        A. The frequency-space transformation (A^-1)^T is automatically
-        computed and applied. If provided, must be a 2x2 torch.Tensor.
-        For 3D images, this parameter is ignored.
 
     Returns
     -------
@@ -52,47 +45,21 @@ def fftfreq_grid(
         image dimension if `norm` is `False` else `(*image_shape, )`.
     """
     if len(image_shape) == 2:
-        # Type narrowing: for 2D, spacing can only be float or tuple[float, float]
-        spacing_2d = cast("float | tuple[float, float]", spacing)
         frequency_grid = _construct_fftfreq_grid_2d(
             image_shape=image_shape,
             rfft=rfft,
-            spacing=spacing_2d,
+            spacing=spacing,
             device=device,
         )
-        # Apply transformation matrix in fftshifted coordinate system
-        # (centered coordinates where DC is at center)
-        if transform_matrix is not None:
-            # Always shift to centered coordinates for transformation
-            frequency_grid = einops.rearrange(frequency_grid, "... freq -> freq ...")
-            frequency_grid = fftshift_2d(frequency_grid, rfft=rfft)
-            frequency_grid = einops.rearrange(frequency_grid, "freq ... -> ... freq")
-            # Apply transformation in centered coordinate system
-            frequency_grid = _apply_transform_matrix_2d(
-                frequency_grid, transform_matrix, device=device
-            )
-            # Undo shift if fftshift was False (user doesn't want final output shifted)
-            if fftshift is False:
-                frequency_grid = einops.rearrange(
-                    frequency_grid, "... freq -> freq ..."
-                )
-                frequency_grid = ifftshift_2d(frequency_grid, rfft=rfft)
-                frequency_grid = einops.rearrange(
-                    frequency_grid, "freq ... -> ... freq"
-                )
-        elif fftshift is True:
-            # No transformation, just apply fftshift if requested
+        if fftshift is True:
             frequency_grid = einops.rearrange(frequency_grid, "... freq -> freq ...")
             frequency_grid = fftshift_2d(frequency_grid, rfft=rfft)
             frequency_grid = einops.rearrange(frequency_grid, "freq ... -> ... freq")
     elif len(image_shape) == 3:
-        # Type narrowing: for 3D, spacing can only be float or
-        # tuple[float, float, float]
-        spacing_3d = cast("float | tuple[float, float, float]", spacing)
         frequency_grid = _construct_fftfreq_grid_3d(
             image_shape=image_shape,
             rfft=rfft,
-            spacing=spacing_3d,
+            spacing=spacing,
             device=device,
         )
         if fftshift is True:
@@ -112,6 +79,94 @@ def fftfreq_grid(
             ** 0.5
         )
     return frequency_grid
+
+
+def transform_fftfreq_grid(
+    frequency_grid: torch.Tensor,
+    real_space_matrix: torch.Tensor,
+    rfft: bool,
+    fftshifted: bool,
+    device: torch.device | None = None,
+) -> torch.Tensor:
+    """
+    Apply transformation matrix to an N-D spatial frequency grid.
+
+    Parameters
+    ----------
+    frequency_grid : torch.Tensor
+        Frequency grid with shape (..., D), where D is 2 or 3.
+    real_space_matrix : torch.Tensor
+        Real-space matrix with shape (..., D, D).
+        Can be reprensatiative of an anisotropic magnification.
+        Must be broadcastable to frequency_grid.
+        Real space transforms as x -> A x.
+    rfft : bool
+        Whether the grid corresponds to an rfft layout.
+    fftshifted : bool
+        Whether the input grid is already fftshifted.
+    device: torch.device | None
+        PyTorch device for the transformation matrix.
+
+    Returns
+    -------
+    transformed_grid : torch.Tensor
+        Frequency grid with transformation applied.
+        Same shape and layout as input.
+    """
+    # Move tensors to a common device
+    if device is not None:
+        frequency_grid = frequency_grid.to(device)
+        real_space_matrix = real_space_matrix.to(device)
+    else:
+        real_space_matrix = real_space_matrix.to(frequency_grid.device)
+
+    ndim = frequency_grid.shape[-1]
+
+    if real_space_matrix.shape[-2:] != (ndim, ndim):
+        raise ValueError(
+            f"real_space_matrix must have shape (..., {ndim}, {ndim}), "
+            f"got {real_space_matrix.shape}"
+        )
+
+    real_space_mat = real_space_matrix.to(
+        dtype=frequency_grid.dtype,
+        device=frequency_grid.device,
+    )
+
+    # Fourier-space transform matrix: (A^-1)^T
+    fourier_space_mat = torch.linalg.inv(real_space_mat).transpose(-2, -1)
+
+    # Shift to centered coordinates if needed
+    if not fftshifted:
+        frequency_grid = einops.rearrange(frequency_grid, "... d -> d ...")
+
+        if ndim == 2:
+            frequency_grid = fftshift_2d(frequency_grid, rfft=rfft)
+        elif ndim == 3:
+            frequency_grid = fftshift_3d(frequency_grid, rfft=rfft)
+        else:
+            raise NotImplementedError("Only 2D and 3D supported")
+
+        frequency_grid = einops.rearrange(frequency_grid, "d ... -> ... d")
+
+    # Apply transform:
+    # [k_new]^T = fourier_space_mat @ [k]^T
+    frequency_grid = einops.rearrange(frequency_grid, "... d -> ... d 1")
+    frequency_grid = fourier_space_mat @ frequency_grid
+    transformed_grid = einops.rearrange(frequency_grid, "... d 1 -> ... d")
+
+    # Restore original shift convention
+    if not fftshifted:
+        transformed_grid = einops.rearrange(transformed_grid, "... d -> d ...")
+
+        if ndim == 2:
+            transformed_grid = ifftshift_2d(transformed_grid, rfft=rfft)
+        else:
+            transformed_grid = ifftshift_3d(transformed_grid, rfft=rfft)
+
+        transformed_grid = einops.rearrange(transformed_grid, "d ... -> ... d")
+
+    return transformed_grid
 
 
 def _construct_fftfreq_grid_2d(
@@ -150,72 +205,6 @@ def _construct_fftfreq_grid_2d(
     freq_yy = einops.repeat(freq_y, "h -> h w", w=w)
     freq_xx = einops.repeat(freq_x, "w -> h w", h=h)
     return einops.rearrange([freq_yy, freq_xx], "freq h w -> h w freq")
-
-
-def _apply_transform_matrix_2d(
-    frequency_grid: torch.Tensor,
-    transform_matrix: torch.Tensor,
-    device: torch.device | None = None,
-) -> torch.Tensor:
-    """Apply a 2x2 transformation matrix to a 2D frequency grid.
-
-    The input transform_matrix is a real-space transformation matrix A.
-    In Fourier space, coordinates transform by the inverse transpose:
-    k' = (A^-1)^T @ k.
-
-    Parameters
-    ----------
-    frequency_grid: torch.Tensor
-        Frequency grid with shape `(h, w, 2)`.
-    transform_matrix: torch.Tensor
-        2x2 real-space transformation matrix A. The frequency-space
-        transformation (A^-1)^T is automatically computed.
-    device: torch.device | None
-        PyTorch device for the transformation matrix.
-
-    Returns
-    -------
-    transformed_grid: torch.Tensor
-        Transformed frequency grid with shape `(h, w, 2)`.
-    """
-    # Ensure matrix is on the correct device
-    if device is not None:
-        transform_matrix = transform_matrix.to(device)
-    elif frequency_grid.device is not None:
-        transform_matrix = transform_matrix.to(frequency_grid.device)
-
-    # Validate matrix shape
-    if transform_matrix.shape != (2, 2):
-        raise ValueError(
-            f"transform_matrix must be a 2x2 matrix, "
-            f"got shape {transform_matrix.shape}"
-        )
-
-    # Ensure matrix is float type for matrix operations
-    transform_matrix = transform_matrix.float()
-
-    # Convert real-space transformation to frequency-space transformation
-    # If A is the real-space transform, frequency space uses (A^-1)^T
-    freq_transform = torch.linalg.inv(transform_matrix).T
-
-    # Apply transformation:
-    # [freq_y_new, freq_x_new]^T = freq_transform @ [freq_y, freq_x]^T
-    # frequency_grid has shape (h, w, 2), we need to apply matrix
-    # multiplication to the last dimension. Reshape to (h*w, 2) for batch
-    # matrix multiplication
-    h, w = frequency_grid.shape[:2]
-    freq_flat = einops.rearrange(frequency_grid, "h w freq -> (h w) freq")
-
-    # Apply transformation: (h*w, 2) @ (2, 2)^T = (h*w, 2)
-    # Note: freq_transform @ freq_flat^T would give (2, h*w), so we transpose
-    transformed_flat = torch.matmul(freq_flat, freq_transform.T)
-
-    # Reshape back to (h, w, 2)
-    transformed_grid = einops.rearrange(
-        transformed_flat, "(h w) freq -> h w freq", h=h, w=w
-    )
-
-    return transformed_grid
 
 
 def _construct_fftfreq_grid_3d(
