@@ -299,9 +299,7 @@ class LazyPatchGrid:
 
         return patches
 
-    def _make_cache_key(
-        self, key: int | slice | tuple | Any
-    ) -> tuple | slice | int | Any:
+    def _make_cache_key(self, key: int | slice | tuple | Any) -> tuple | int | Any:
         """
         Convert indexing key to a hashable cache key.
 
@@ -312,12 +310,12 @@ class LazyPatchGrid:
 
         Returns
         -------
-        cache_key: tuple | slice | int | Any
+        cache_key: tuple | int | Any
             Hashable cache key.
         """
         if isinstance(key, tuple):
             return tuple(
-                slice(s.start, s.stop, s.step)
+                (s.start, s.stop, s.step)
                 if isinstance(s, slice)
                 else s
                 if isinstance(s, (int, type(Ellipsis)))
@@ -327,7 +325,7 @@ class LazyPatchGrid:
                 for s in key
             )
         elif isinstance(key, slice):
-            return slice(key.start, key.stop, key.step)
+            return (key.start, key.stop, key.step)
         elif isinstance(key, torch.Tensor):
             return tuple(key.tolist())
         else:

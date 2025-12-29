@@ -297,8 +297,11 @@ def test_patch_grid_device():
             distribute_patches=False,
         )
 
-        assert patches.device == device
-        assert centers.device == device
+        # Normalize devices for comparison (cuda == cuda:0)
+        assert patches.device.type == device.type
+        assert patches.device.index == (device.index or 0)
+        assert centers.device.type == device.type
+        assert centers.device.index == (device.index or 0)
 
 
 def test_patch_grid_centers_device():
@@ -313,4 +316,6 @@ def test_patch_grid_centers_device():
             device=device,
         )
 
-        assert centers.device == device
+        # Normalize devices for comparison (cuda == cuda:0)
+        assert centers.device.type == device.type
+        assert centers.device.index == (device.index or 0)
