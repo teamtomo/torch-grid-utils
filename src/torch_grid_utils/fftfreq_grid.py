@@ -84,8 +84,6 @@ def fftfreq_grid(
 def transform_fftfreq_grid(
     frequency_grid: torch.Tensor,
     real_space_matrix: torch.Tensor,
-    rfft: bool,
-    fftshifted: bool,
     device: torch.device | None = None,
 ) -> torch.Tensor:
     """
@@ -100,10 +98,6 @@ def transform_fftfreq_grid(
         Can be reprensatiative of an anisotropic magnification.
         Must be broadcastable to frequency_grid.
         Real space transforms as x -> A x.
-    rfft : bool
-        Whether the grid corresponds to an rfft layout.
-    fftshifted : bool
-        Whether the input grid is already fftshifted.
     device: torch.device | None
         PyTorch device for the transformation matrix.
 
@@ -136,35 +130,11 @@ def transform_fftfreq_grid(
     # Fourier-space transform matrix: (A^-1)^T
     fourier_space_mat = torch.linalg.inv(real_space_mat).transpose(-2, -1)
 
-    # Shift to centered coordinates if needed
-    if not fftshifted:
-        frequency_grid = einops.rearrange(frequency_grid, "... d -> d ...")
-
-        if ndim == 2:
-            frequency_grid = fftshift_2d(frequency_grid, rfft=rfft)
-        elif ndim == 3:
-            frequency_grid = fftshift_3d(frequency_grid, rfft=rfft)
-        else:
-            raise NotImplementedError("Only 2D and 3D supported")
-
-        frequency_grid = einops.rearrange(frequency_grid, "d ... -> ... d")
-
     # Apply transform:
     # [k_new]^T = fourier_space_mat @ [k]^T
     frequency_grid = einops.rearrange(frequency_grid, "... d -> ... d 1")
     frequency_grid = fourier_space_mat @ frequency_grid
     transformed_grid = einops.rearrange(frequency_grid, "... d 1 -> ... d")
-
-    # Restore original shift convention
-    if not fftshifted:
-        transformed_grid = einops.rearrange(transformed_grid, "... d -> d ...")
-
-        if ndim == 2:
-            transformed_grid = ifftshift_2d(transformed_grid, rfft=rfft)
-        else:
-            transformed_grid = ifftshift_3d(transformed_grid, rfft=rfft)
-
-        transformed_grid = einops.rearrange(transformed_grid, "d ... -> ... d")
 
     return transformed_grid
 

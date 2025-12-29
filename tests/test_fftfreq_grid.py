@@ -635,8 +635,6 @@ def test_fftfreq_grid_2d_with_transform_matrix():
     grid_no_shift = transform_fftfreq_grid(
         frequency_grid=grid_base,
         real_space_matrix=transform_matrix,
-        rfft=False,
-        fftshifted=False,
     )
     assert tuple(grid_no_shift.shape) == (4, 4, 2)
 
@@ -649,8 +647,6 @@ def test_fftfreq_grid_2d_with_transform_matrix():
     grid_shifted = transform_fftfreq_grid(
         frequency_grid=grid_base_shifted,
         real_space_matrix=transform_matrix,
-        rfft=False,
-        fftshifted=True,
     )
     assert tuple(grid_shifted.shape) == (4, 4, 2)
 
@@ -684,8 +680,6 @@ def test_fftfreq_grid_2d_with_transform_matrix_fftshifted():
     grid = transform_fftfreq_grid(
         frequency_grid=grid_base,
         real_space_matrix=transform_matrix,
-        rfft=False,
-        fftshifted=True,
     )
     assert tuple(grid.shape) == (4, 4, 2)
 
