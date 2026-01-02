@@ -7,6 +7,7 @@ from torch_grid_utils import (
     cartesian_to_polar,
     fftfreq_grid,
     fftfreq_grid_polar,
+    normalize_polar_grid,
     polar_grid,
     polar_to_cartesian,
 )
@@ -146,7 +147,8 @@ def test_polar_grid_with_center():
 
 def test_polar_grid_with_normalize_rho():
     """Test polar grid with normalized rho."""
-    rho, theta = polar_grid(image_shape=(4, 4), normalize_rho=True)
+    rho, theta = polar_grid(image_shape=(4, 4))
+    rho, theta = normalize_polar_grid(rho, theta)
 
     assert rho.shape == (4, 4)
     assert theta.shape == (4, 4)
@@ -159,7 +161,7 @@ def test_polar_grid_with_normalize_rho():
 
 def test_polar_grid_without_normalize_rho():
     """Test polar grid without normalized rho."""
-    rho, _ = polar_grid(image_shape=(4, 4), normalize_rho=False)
+    rho, _ = polar_grid(image_shape=(4, 4))
 
     assert rho.shape == (4, 4)
     # Without normalization, rho can be > 1

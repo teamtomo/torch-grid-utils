@@ -8,7 +8,6 @@ from torch_grid_utils.coordinate_grid import coordinate_grid
 def polar_grid(
     image_shape: tuple[int, int],
     center: torch.Tensor | tuple[float, float] | None = None,
-    normalize_rho: bool = False,
     device: torch.device | None = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Construct a 2D polar coordinate grid from image dimensions.
@@ -24,9 +23,6 @@ def polar_grid(
     center : torch.Tensor | tuple[float, float] | None
         Center point relative to which coordinates will be calculated.
         If `None`, defaults to the image center `(h//2, w//2)`.
-    normalize_rho : bool
-        Whether to normalize the radial distance to the range [0, 1] by dividing
-        by the maximum radial distance.
     device : torch.device | None
         PyTorch device on which to put the coordinate grid.
 
@@ -55,9 +51,6 @@ def polar_grid(
 
     # Convert to polar coordinates
     rho, theta = cartesian_to_polar(cartesian_grid)
-
-    if normalize_rho:
-        rho, theta = normalize_polar_grid(rho, theta)
 
     return rho, theta
 
