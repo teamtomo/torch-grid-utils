@@ -14,8 +14,9 @@ from torch_grid_utils import (
 
 def test_cartesian_to_polar_basic():
     """Test basic Cartesian to polar conversion."""
-    # Simple 2D grid
-    cartesian = torch.tensor([[[0.0, 0.0], [1.0, 0.0]], [[0.0, 1.0], [1.0, 1.0]]])
+    # Simple 2D grid with [y, x] order
+    # Grid: [[(0,0), (0,1)], [(1,0), (1,1)]] in (y, x) coordinates
+    cartesian = torch.tensor([[[0.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [1.0, 1.0]]])
     rho, theta = cartesian_to_polar(cartesian)
 
     assert rho.shape == (2, 2)
@@ -24,29 +25,29 @@ def test_cartesian_to_polar_basic():
     # Origin should have rho ≈ 0 (with eps)
     assert torch.allclose(rho[0, 0], torch.tensor(0.0), atol=1e-6)
 
-    # Point at (1, 0) should have rho=1, theta=0
+    # Point at (x=1, y=0) should have rho=1, theta=0
     assert torch.allclose(rho[0, 1], torch.tensor(1.0), atol=1e-6)
     assert torch.allclose(theta[0, 1], torch.tensor(0.0), atol=1e-6)
 
-    # Point at (0, 1) should have rho=1, theta=π/2
+    # Point at (x=0, y=1) should have rho=1, theta=π/2
     assert torch.allclose(rho[1, 0], torch.tensor(1.0), atol=1e-6)
     assert torch.allclose(theta[1, 0], torch.tensor(torch.pi / 2), atol=1e-6)
 
-    # Point at (1, 1) should have rho=√2, theta=π/4
+    # Point at (x=1, y=1) should have rho=√2, theta=π/4
     assert torch.allclose(rho[1, 1], torch.tensor(2.0**0.5), atol=1e-6)
     assert torch.allclose(theta[1, 1], torch.tensor(torch.pi / 4), atol=1e-6)
 
 
 def test_cartesian_to_polar_negative_angles():
     """Test that negative angles are handled correctly."""
-    # Point at (-1, 0) should have theta=π
-    cartesian = torch.tensor([[[-1.0, 0.0]]])
+    # Point at (x=-1, y=0) should have theta=π
+    cartesian = torch.tensor([[[0.0, -1.0]]])  # [y, x] order
     rho, theta = cartesian_to_polar(cartesian)
     assert torch.allclose(rho[0, 0], torch.tensor(1.0), atol=1e-6)
     assert torch.allclose(theta[0, 0], torch.tensor(torch.pi), atol=1e-6)
 
-    # Point at (-1, -1) should have theta=-3π/4
-    cartesian = torch.tensor([[[-1.0, -1.0]]])
+    # Point at (x=-1, y=-1) should have theta=-3π/4
+    cartesian = torch.tensor([[[-1.0, -1.0]]])  # [y, x] order
     rho, theta = cartesian_to_polar(cartesian)
     assert torch.allclose(rho[0, 0], torch.tensor(2.0**0.5), atol=1e-6)
     assert torch.allclose(theta[0, 0], torch.tensor(-3 * torch.pi / 4), atol=1e-6)
@@ -79,17 +80,17 @@ def test_polar_to_cartesian_basic():
 
     assert cartesian.shape == (2, 2, 2)
 
-    # Point with rho=1, theta=0 should be at (1, 0)
-    assert torch.allclose(cartesian[0, 1, 0], torch.tensor(1.0), atol=1e-6)
-    assert torch.allclose(cartesian[0, 1, 1], torch.tensor(0.0), atol=1e-6)
+    # Point with rho=1, theta=0 should be at (x=1, y=0) -> [y=0, x=1]
+    assert torch.allclose(cartesian[0, 1, 0], torch.tensor(0.0), atol=1e-6)  # y
+    assert torch.allclose(cartesian[0, 1, 1], torch.tensor(1.0), atol=1e-6)  # x
 
-    # Point with rho=1, theta=π/2 should be at (0, 1)
-    assert torch.allclose(cartesian[1, 0, 0], torch.tensor(0.0), atol=1e-6)
-    assert torch.allclose(cartesian[1, 0, 1], torch.tensor(1.0), atol=1e-6)
+    # Point with rho=1, theta=π/2 should be at (x=0, y=1) -> [y=1, x=0]
+    assert torch.allclose(cartesian[1, 0, 0], torch.tensor(1.0), atol=1e-6)  # y
+    assert torch.allclose(cartesian[1, 0, 1], torch.tensor(0.0), atol=1e-6)  # x
 
-    # Point with rho=√2, theta=π/4 should be at (1, 1)
-    assert torch.allclose(cartesian[1, 1, 0], torch.tensor(1.0), atol=1e-6)
-    assert torch.allclose(cartesian[1, 1, 1], torch.tensor(1.0), atol=1e-6)
+    # Point with rho=√2, theta=π/4 should be at (x=1, y=1) -> [y=1, x=1]
+    assert torch.allclose(cartesian[1, 1, 0], torch.tensor(1.0), atol=1e-6)  # y
+    assert torch.allclose(cartesian[1, 1, 1], torch.tensor(1.0), atol=1e-6)  # x
 
 
 def test_polar_to_cartesian_error_handling():
@@ -103,9 +104,9 @@ def test_polar_to_cartesian_error_handling():
 
 def test_cartesian_polar_roundtrip():
     """Test that converting Cartesian -> polar -> Cartesian recovers original."""
-    # Create a simple Cartesian grid
+    # Create a simple Cartesian grid with [y, x] order
     cartesian_original = torch.tensor(
-        [[[0.0, 0.0], [1.0, 0.0], [-1.0, 0.0]], [[0.0, 1.0], [1.0, 1.0], [-1.0, -1.0]]]
+        [[[0.0, 0.0], [0.0, 1.0], [0.0, -1.0]], [[1.0, 0.0], [1.0, 1.0], [-1.0, -1.0]]]
     )
 
     # Convert to polar and back
@@ -247,11 +248,11 @@ def test_polar_grid_device():
 
 def test_cartesian_to_polar_3d_batch():
     """Test cartesian_to_polar with 3D batch dimensions."""
-    # Shape: (batch, height, width, 2)
+    # Shape: (batch, height, width, 2) with [y, x] order
     cartesian = torch.tensor(
         [
-            [[[0.0, 0.0], [1.0, 0.0]], [[0.0, 1.0], [1.0, 1.0]]],
-            [[[2.0, 0.0], [0.0, 2.0]], [[-1.0, 0.0], [0.0, -1.0]]],
+            [[[0.0, 0.0], [0.0, 1.0]], [[1.0, 0.0], [1.0, 1.0]]],
+            [[[0.0, 2.0], [2.0, 0.0]], [[0.0, -1.0], [-1.0, 0.0]]],
         ]
     )
 
@@ -263,7 +264,7 @@ def test_cartesian_to_polar_3d_batch():
     # First batch, origin
     assert torch.allclose(rho[0, 0, 0], torch.tensor(0.0), atol=1e-6)
 
-    # First batch, (1, 0)
+    # First batch, (x=1, y=0)
     assert torch.allclose(rho[0, 0, 1], torch.tensor(1.0), atol=1e-6)
     assert torch.allclose(theta[0, 0, 1], torch.tensor(0.0), atol=1e-6)
 

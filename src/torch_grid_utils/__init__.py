@@ -26,6 +26,7 @@ from torch_grid_utils.patch_grid import (
 from torch_grid_utils.polar_grid import (
     cartesian_to_polar,
     fftfreq_grid_polar,
+    normalize_polar_grid,
     polar_grid,
     polar_to_cartesian,
 )
@@ -57,6 +58,7 @@ __all__ = [
     "ifftshift_2d",
     "ifftshift_3d",
     "image_center",
+    "normalize_polar_grid",
     "patch_grid",
     "patch_grid_centers",
     "patch_grid_indices",

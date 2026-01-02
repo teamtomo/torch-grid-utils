@@ -57,7 +57,7 @@ def polar_grid(
     rho, theta = cartesian_to_polar(cartesian_grid)
 
     if normalize_rho:
-        rho = rho / rho.max()
+        rho, theta = normalize_polar_grid(rho, theta)
 
     return rho, theta
 
@@ -75,7 +75,7 @@ def cartesian_to_polar(
     ----------
     cartesian_grid : torch.Tensor
         Cartesian coordinate grid with shape `(..., 2)` where the last dimension
-        contains `[x, y]` coordinates.
+        contains `[y, x]` coordinates (matching dimension order `(h, w)`).
     eps : float
         Small constant added to the radial distance to avoid division by zero
         and numerical issues at the origin.
@@ -93,8 +93,8 @@ def cartesian_to_polar(
             f"cartesian_grid must have shape (..., 2), got {cartesian_grid.shape}"
         )
 
-    x = cartesian_grid[..., 0]
-    y = cartesian_grid[..., 1]
+    y = cartesian_grid[..., 0]
+    x = cartesian_grid[..., 1]
 
     rho = torch.sqrt(x**2 + y**2 + eps)
     theta = torch.atan2(y, x)
@@ -119,7 +119,7 @@ def polar_to_cartesian(
     -------
     cartesian_grid : torch.Tensor
         Cartesian coordinate grid with shape `(..., 2)` where the last dimension
-        contains `[x, y]` coordinates.
+        contains `[y, x]` coordinates (matching dimension order `(h, w)`).
     """
     if rho.shape != theta.shape:
         raise ValueError(
@@ -129,7 +129,40 @@ def polar_to_cartesian(
     x = rho * torch.cos(theta)
     y = rho * torch.sin(theta)
 
-    return torch.stack([x, y], dim=-1)
+    return torch.stack([y, x], dim=-1)
+
+
+def normalize_polar_grid(
+    rho: torch.Tensor,
+    theta: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Normalize the radial distance in a polar coordinate grid.
+
+    Normalizes the radial distance `rho` to the range [0, 1] by dividing by the
+    maximum radial distance. The angular coordinate `theta` is returned unchanged.
+
+    Parameters
+    ----------
+    rho : torch.Tensor
+        Radial distance from the origin. Shape `(..., )`.
+    theta : torch.Tensor
+        Polar angle in radians. Must have the same shape as `rho`.
+
+    Returns
+    -------
+    rho_norm : torch.Tensor
+        Normalized radial distance in the range [0, 1]. Same shape as input `rho`.
+    theta : torch.Tensor
+        Polar angle in radians, unchanged from input. Same shape as input `theta`.
+    """
+    if rho.shape != theta.shape:
+        raise ValueError(
+            f"rho and theta must have the same shape, got {rho.shape} and {theta.shape}"
+        )
+
+    rho_norm = rho / rho.max()
+
+    return rho_norm, theta
 
 
 def fftfreq_grid_polar(
@@ -146,7 +179,7 @@ def fftfreq_grid_polar(
     ----------
     fft_freq_grid : torch.Tensor
         Cartesian frequency grid with shape `(..., h, w, 2)` where the last
-        dimension contains `[kx, ky]` frequencies.
+        dimension contains `[ky, kx]` frequencies (matching dimension order `(h, w)`).
     eps : float
         Small constant added to the radial distance to avoid division by zero.
     normalize_rho : bool
@@ -164,6 +197,6 @@ def fftfreq_grid_polar(
     rho, theta = cartesian_to_polar(fft_freq_grid, eps=eps)
 
     if normalize_rho:
-        rho_norm = rho / rho.max()
-        return rho_norm, theta
+        rho, theta = normalize_polar_grid(rho, theta)
+
     return rho, theta
