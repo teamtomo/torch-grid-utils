@@ -5,6 +5,8 @@ from typing import Sequence
 import einops
 import torch
 
+from torch_grid_utils.fft_shape import rfft_shape
+
 
 # no lru_cache as it interferes with gradient calculation (see torch-fourier-shift PR#5)
 def fftfreq_grid(
@@ -122,10 +124,12 @@ def transform_fftfreq_grid(
             f"got {real_space_matrix.shape}"
         )
 
-    real_space_mat = real_space_matrix.to(
-        dtype=frequency_grid.dtype,
-        device=frequency_grid.device,
-    )
+    # Ensure dtype compatibility while preserving gradients
+    # Use .to() only if dtype actually needs to change
+    if real_space_matrix.dtype != frequency_grid.dtype:
+        real_space_mat = real_space_matrix.to(dtype=frequency_grid.dtype)
+    else:
+        real_space_mat = real_space_matrix
 
     # Fourier-space transform matrix: (A^-1)^T
     fourier_space_mat = torch.linalg.inv(real_space_mat).transpose(-2, -1)
@@ -215,13 +219,6 @@ def _construct_fftfreq_grid_3d(
     freq_yy = einops.repeat(freq_y, "h -> d h w", d=d, w=w)
     freq_xx = einops.repeat(freq_x, "w -> d h w", d=d, h=h)
     return einops.rearrange([freq_zz, freq_yy, freq_xx], "freq ... -> ... freq")
-
-
-def rfft_shape(input_shape: Sequence[int]) -> tuple[int, ...]:
-    """Get the output shape of an rfft on an input with input_shape."""
-    rfft_shape = list(input_shape)
-    rfft_shape[-1] = int((rfft_shape[-1] / 2) + 1)
-    return tuple(rfft_shape)
 
 
 def dft_center(
