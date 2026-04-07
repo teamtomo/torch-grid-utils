@@ -12,7 +12,7 @@ def rfft_shape(input_shape: Sequence[int]) -> tuple[int, ...]:
 
 
 def next_fft_size(n: int, factors: tuple[int, ...] = (2, 3, 5, 7)) -> int:
-    """Smallest integer ``>= n`` whose prime factors are only 2, 3, 5, and 7.
+    """Smallest integer ``>= n`` whose prime factors lie in ``factors``.
 
     Such sizes are convenient for FFT implementations that pad to "FFT-friendly"
     lengths (mixed-radix transforms). For ``n <= 1``, returns ``1``.
@@ -22,13 +22,12 @@ def next_fft_size(n: int, factors: tuple[int, ...] = (2, 3, 5, 7)) -> int:
     n: int
         Minimum required size (typically a padded image edge length).
     factors: tuple[int, ...], optional
-        List of allowed prime factors. By default is ``[2, 3, 5, 7]`` (typical).
+        List of allowed prime factors. Default is ``[2, 3, 5, 7]``.
 
     Returns
     -------
     int
-        The minimal integer at least ``n`` whose prime factors lie are purely in
-        the provided list of factors.
+        The smallest integer >= n whose prime factors lie in ``factors``.
     """
     if n <= 1:
         return 1
@@ -37,7 +36,8 @@ def next_fft_size(n: int, factors: tuple[int, ...] = (2, 3, 5, 7)) -> int:
 
     heap = [1]
     seen = {1}
-    upper_bound = min(n * 2, 2**31)
+    max_int = 2**31
+    upper_bound = min(n * 2, max_int)
 
     while heap:
         candidate = heapq.heappop(heap)
@@ -57,4 +57,4 @@ def next_fft_size(n: int, factors: tuple[int, ...] = (2, 3, 5, 7)) -> int:
                 heapq.heappush(heap, next_val)
 
     # Should never reach here.
-    return -1
+    raise RuntimeError("Unreachable: no FFT size found")
