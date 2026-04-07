@@ -1,9 +1,7 @@
 """FFT-related shape utilities (rFFT output shape, FFT-friendly padding sizes)."""
 
-import math
+import heapq
 from typing import Sequence
-
-import torch
 
 
 def rfft_shape(input_shape: Sequence[int]) -> tuple[int, ...]:
@@ -13,7 +11,7 @@ def rfft_shape(input_shape: Sequence[int]) -> tuple[int, ...]:
     return tuple(out)
 
 
-def next_fft_size(n: int) -> int:
+def next_fft_size(n: int, factors: tuple[int, ...] = (2, 3, 5, 7)) -> int:
     """Smallest integer ``>= n`` whose prime factors are only 2, 3, 5, and 7.
 
     Such sizes are convenient for FFT implementations that pad to "FFT-friendly"
@@ -21,31 +19,42 @@ def next_fft_size(n: int) -> int:
 
     Parameters
     ----------
-    n
+    n: int
         Minimum required size (typically a padded image edge length).
+    factors: tuple[int, ...], optional
+        List of allowed prime factors. By default is ``[2, 3, 5, 7]`` (typical).
 
     Returns
     -------
     int
-        The minimal integer at least ``n`` whose prime factors lie in ``{2, 3, 5, 7}``.
+        The minimal integer at least ``n`` whose prime factors lie are purely in
+        the provided list of factors.
     """
     if n <= 1:
         return 1
+    if n <= 2:
+        return 2
 
-    limit = max(2 * n, 32)
-    while True:
-        i_max = int(math.floor(math.log2(limit))) + 1
-        j_max = int(math.floor(math.log(limit) / math.log(3))) + 1
-        k_max = int(math.floor(math.log(limit) / math.log(5))) + 1
-        l_max = int(math.floor(math.log(limit) / math.log(7))) + 1
+    heap = [1]
+    seen = {1}
+    upper_bound = min(n * 2, 2**31)
 
-        i = torch.arange(i_max, dtype=torch.int64)
-        j = torch.arange(j_max, dtype=torch.int64)
-        k = torch.arange(k_max, dtype=torch.int64)
-        e7 = torch.arange(l_max, dtype=torch.int64)
-        ii, jj, kk, ll = torch.meshgrid(i, j, k, e7, indexing="ij")
-        vals = (2**ii) * (3**jj) * (5**kk) * (7**ll)
-        candidates = vals[vals >= n]
-        if candidates.numel() > 0:
-            return int(candidates.min().item())
-        limit *= 2
+    while heap:
+        candidate = heapq.heappop(heap)
+
+        # Return when the first larger candidate is found
+        if candidate >= n:
+            return candidate
+
+        for prime in factors:
+            next_val = candidate * prime
+            if next_val > upper_bound:
+                continue
+
+            # Add new potential candidate into the heap
+            if next_val not in seen:
+                seen.add(next_val)
+                heapq.heappush(heap, next_val)
+
+    # Should never reach here.
+    return -1
